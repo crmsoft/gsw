@@ -32,8 +32,13 @@ class SocketHandler implements HandlerContract
             $user = JWTAuth::parseToken()->authenticate();
             auth()->loginUsingId($user->id);
 
-            SocketPool::push($user, $fd);
+            $token = str_random(31);
+            App::make(Server::class)->push($fd, json_encode([
+                'token' => $token,
+                'action' => 'auth'
+            ]));
 
+            SocketPool::push($user, $fd, $token);
             StatusController::userOnline($user);
         } catch (\Exception $e) {
             echo $e->getMessage()."\n";

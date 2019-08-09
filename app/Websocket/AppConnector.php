@@ -5,6 +5,7 @@ namespace App\Websocket;
 use Swoole\Coroutine\Redis;
 use App\Websocket\Controllers\ChatMessageController;
 use App\Websocket\Controllers\NotificationController;
+use App\Websocket\Controllers\FindDudesController;
 
 class AppConnector {
 
@@ -31,6 +32,10 @@ class AppConnector {
                             ChatMessageController::viewed($payload);
                         } elseif ($payload['action'] == 'notification') {
                             NotificationController::notifyNotification($payload['target']);
+                        } elseif ($payload['action'] == 'sub-find-dudes') {
+                            FindDudesController::pushToRoom($payload);
+                        } elseif ($payload['action'] == 'unsub-find-dudes') {
+                            FindDudesController::popFromRoom($payload);
                         } // end if
                     } 
                 }

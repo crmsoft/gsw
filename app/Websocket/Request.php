@@ -10,7 +10,7 @@ class Request {
      * @var array
      */
     private static $allowed = [
-        'message'
+        'message', 'find-dudes-message'
     ];
 
     /**
@@ -21,6 +21,7 @@ class Request {
     public static function validate(string $payload)
     {
         $data = json_decode($payload, true);
+
         if (json_last_error() === JSON_ERROR_NONE) {
             if (isset($data['action']) && in_array($data['action'], self::$allowed)) {
                 
@@ -29,7 +30,6 @@ class Request {
                 $requestData->setPayload($data['data']);
 
                 return $requestData;
-
             } // end if
         } // end if
 

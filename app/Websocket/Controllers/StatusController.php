@@ -28,7 +28,8 @@ class StatusController implements Controller {
                 if ($friend->user_communication_id > 0) {
                     SocketPool::to($friend, [
                         'target' => $user->username,
-                        'action' => 'offline'
+                        'action' => 'offline',
+                        'status' => $user->profile->m_status
                     ]);
                 } // end if
             });
@@ -52,11 +53,32 @@ class StatusController implements Controller {
                 if ($friend->user_communication_id > 0) {
                     SocketPool::to($friend, [
                         'target' => $user->username,
-                        'action' => 'online'
+                        'action' => 'online',
+                        'status' => $user->profile->m_status
                     ]);
                 } // end if
             });
 
         } // end if
+    }
+
+    /**
+     * User changes settings on messenger
+     * 
+     * @param User
+     * 
+     * @return void
+     */
+    public static function userStatusToggle($user)
+    {
+        $user->friend->map(function ($friend) use ($user) {
+            if ($friend->user_communication_id > 0) {
+                SocketPool::to($friend, [
+                    'target' => $user->username,
+                    'action' => 'online',
+                    'status' => $user->profile->m_status
+                ]);
+            } // end if
+        });
     }
 }

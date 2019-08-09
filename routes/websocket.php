@@ -4,12 +4,7 @@
 use Illuminate\Http\Request;
 use SwooleTW\Http\Websocket\Facades\Websocket;
 use App\Websocket\Controllers\ChatMessageController;
-
-use Co\Redis;
-
-$client = new Redis;
-$client->connect('127.0.0.1', 6379);
-// $client->subscribe('message');
+use App\Websocket\Controllers\FindDudesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,4 +17,8 @@ $client->connect('127.0.0.1', 6379);
 
 Websocket::on('message', function ($websocket, $data) {
     $a = new ChatMessageController($data);
+});
+
+Websocket::on('find-dudes-message', function ($websocket, $data) {
+    FindDudesController::notifyRoom($data);
 });

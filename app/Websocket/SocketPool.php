@@ -12,6 +12,9 @@ use SwooleTW\Http\Table\Facades\SwooleTable;
  * @method push - add connection to the user
  * @method pop - remove user connection
  * @method to - send to the user data
+ * 
+ * 0 => int fd
+ * 1 => string page-id
  */
 final class SocketPool {
 
@@ -56,7 +59,9 @@ final class SocketPool {
 
         $cons = ($data ? explode(',', $data['connections']) : []);
 
-        return $cons;
+        return array_map(function($conn) {
+            return explode('|', $conn);
+        }, $cons);
     }
 
     /**
@@ -69,9 +74,9 @@ final class SocketPool {
     final public static function to($user, array $message): void
     {
         foreach (self::connections($user->id) as $fd) {
-            print_r("\n $user->id , $fd \n");
+            print_r("\n $user->id , {$fd[0]} \n");
             print_r(Websocket::broadcast()->to(
-                $fd
+                $fd[0]
             )->emit(
                 'message',
                 json_encode($message)
@@ -82,22 +87,23 @@ final class SocketPool {
     /**
      * Add user connection
      * 
-     * @param User
-     * @param int
+     * @param User $user
+     * @param int $fd
+     * @param string $token
      * 
      * @return void
      */
-    final static public function push($user, $fd): void
+    final static public function push($user, $fd, string $token): void
     {
         print_r("\n new fd: $fd \n");
         $connections = self::connections($user->id);
 
-        $connections[] = $fd;
+        $connections[] = [$fd, $token];
         print_r("user: $user->id, cons: " . json_encode($connections) . "\n");
 
         $data = self::table()->get($user->id);
         $data['id'] = $user->id;
-        $data['connections'] = implode(',', $connections);
+        $data['connections'] = implode(',', array_map(function($i){return "{$i[0]}|{$i[1]}";}, $connections));
         self::table()->set($user->id, $data);
     }
 
@@ -115,13 +121,13 @@ final class SocketPool {
         $connections = self::connections($user_id);
         // pick live connections
         $connections = collect($connections)->filter(function ($_fd) use ($fd) {
-            return $_fd != $fd;
+            return $_fd[0] != $fd;
         });
 
         // get user current connections
         $data = self::table()->get($user_id);
         // set user new connections info
-        $data['connections'] = implode(',', $connections->toArray());
+        $data['connections'] = $connections->map(function($i) {return "{$i[0]}|$i[1]";})->implode(',');
         // remove from storage or store updated
         if (empty($data['connections'])) {
             self::table()->del($user_id);
