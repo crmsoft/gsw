@@ -3,8 +3,6 @@
 
 use Illuminate\Http\Request;
 use SwooleTW\Http\Websocket\Facades\Websocket;
-use App\Websocket\Controllers\ChatMessageController;
-use App\Websocket\Controllers\FindDudesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,10 +13,7 @@ use App\Websocket\Controllers\FindDudesController;
 |
 */
 
-Websocket::on('message', function ($websocket, $data) {
-    $a = new ChatMessageController($data);
-});
-
-Websocket::on('find-dudes-message', function ($websocket, $data) {
-    FindDudesController::notifyRoom($data);
-});
+// Chat message handler
+Websocket::on('message', 'App\Websocket\Controllers\ChatMessageController@handle');
+// Find your dudes room message handler
+Websocket::on('find-dudes-message', 'App\Websocket\Controllers\FindDudesController@notifyRoom');

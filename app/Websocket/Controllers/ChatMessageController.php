@@ -7,8 +7,15 @@ use App\Entities\Conversation;
 use App\Websocket\SocketPool;
 
 class ChatMessageController implements Controller {
-    public function __construct($data)
-    {
+    
+    /**
+     * 
+     * @param Websocket $websocket
+     * @param array $data
+     * 
+     * @return void
+     */
+    final public static function handle($websocket, $data) {
         $user = auth()->user();
 
         $conversation = Conversation::where('hash_id', $data['requestData'])->first();
