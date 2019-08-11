@@ -2,7 +2,7 @@
 
 namespace App\Websocket;
 
-class Request {
+class Abc {
 
     /**
      * Allowed actions list

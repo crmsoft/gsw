@@ -3,8 +3,6 @@
 
 namespace App\Websocket;
 
-use SwooleTW\Http\Websocket\Facades\Websocket;
-use SwooleTW\Http\Table\Facades\SwooleTable;
 
 /**
  * Associate users with fd 
@@ -23,7 +21,7 @@ final class SocketPool {
      */
     public static function table()
     {
-        return SwooleTable::get('users');
+        return app('swoole')->usersTable;
     }
 
     /**
@@ -71,16 +69,14 @@ final class SocketPool {
      * @param Array 
      * @return void 
      */
-    final public static function to($user, array $message): void
+    final public static function to($server, $user, array $message): void
     {
         foreach (self::connections($user->id) as $fd) {
             print_r("\n $user->id , {$fd[0]} \n");
-            print_r(Websocket::broadcast()->to(
-                $fd[0]
-            )->emit(
-                'message',
+            $server->push(
+                $fd[0],
                 json_encode($message)
-            ) ? 'true':'false');
+            );
         }
     }
 

@@ -3,7 +3,6 @@
 namespace App\Websocket\Controllers;
 
 use App\Websocket\Controllers\Controller;
-use SwooleTW\Http\Websocket\Facades\Websocket;
 use App\Websocket\SocketPool;
 use App\User;
 
@@ -15,7 +14,7 @@ class StatusController implements Controller {
      * @param User
      * @return void
      */
-    public static function userOffline($user)
+    public static function userOffline($user, $server)
     {
         if (count(SocketPool::connections($user)) == 0) {
             print_r("no connections found $user");
@@ -24,9 +23,9 @@ class StatusController implements Controller {
             $user->user_communication_id = null;
             $user->save();
             // notify online friends about user leave
-            $user->friend->map(function ($friend) use ($user) {
+            $user->friend->map(function ($friend) use ($user, $server) {
                 if ($friend->user_communication_id > 0) {
-                    SocketPool::to($friend, [
+                    SocketPool::to($server, $friend, [
                         'target' => $user->username,
                         'action' => 'offline',
                         'status' => $user->profile->m_status
@@ -42,16 +41,16 @@ class StatusController implements Controller {
      * @param User
      * @return void
      */
-    public static function userOnline($user)
+    public static function userOnline($server, $user)
     {
         if ($user->user_communication_id == null) {
             
             $user->user_communication_id = 1;
             $user->save();
 
-            $user->friend->map(function ($friend) use ($user) {
+            $user->friend->map(function ($friend) use ($user, $server) {
                 if ($friend->user_communication_id > 0) {
-                    SocketPool::to($friend, [
+                    SocketPool::to($server, $friend, [
                         'target' => $user->username,
                         'action' => 'online',
                         'status' => $user->profile->m_status
@@ -69,11 +68,11 @@ class StatusController implements Controller {
      * 
      * @return void
      */
-    public static function userStatusToggle($user)
+    public static function userStatusToggle($server, $user)
     {
-        $user->friend->map(function ($friend) use ($user) {
+        $user->friend->map(function ($friend) use ($user, $server) {
             if ($friend->user_communication_id > 0) {
-                SocketPool::to($friend, [
+                SocketPool::to($server, $friend, [
                     'target' => $user->username,
                     'action' => 'online',
                     'status' => $user->profile->m_status
