@@ -2,7 +2,7 @@
 
 namespace App\Websocket;
 
-class Abc {
+class JSONRequest {
 
     /**
      * Allowed actions list

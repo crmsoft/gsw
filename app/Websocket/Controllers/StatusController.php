@@ -14,7 +14,7 @@ class StatusController implements Controller {
      * @param User
      * @return void
      */
-    public static function userOffline($user, $server)
+    public static function userOffline($server, $user)
     {
         if (count(SocketPool::connections($user)) == 0) {
             print_r("no connections found $user");

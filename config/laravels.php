@@ -55,12 +55,18 @@ return [
                 ['name' => 'active', 'type' => swoole_table::TYPE_INT, 'size' => 4]
             ]
         ],
+        'uids' => [
+            'size' => 512,
+            'column' => [
+                ['name' => 'id', 'type' => swoole_table::TYPE_INT, 'size' => 32]
+            ]
+        ]
     ],
     'register_providers'       => [],
     'cleaners'                 => [
-        //Hhxsv5\LaravelS\Illuminate\Cleaners\SessionCleaner::class, // If you use the session or authentication in your project, please uncomment this line
+        Hhxsv5\LaravelS\Illuminate\Cleaners\SessionCleaner::class, // If you use the session or authentication in your project, please uncomment this line
         //Hhxsv5\LaravelS\Illuminate\Cleaners\AuthCleaner::class,    // If you use the authentication or passport in your project, please uncomment this line
-        //Hhxsv5\LaravelS\Illuminate\Cleaners\JWTCleaner::class,     // If you use the package "tymon/jwt-auth" in your project, please uncomment this line
+        Hhxsv5\LaravelS\Illuminate\Cleaners\JWTCleaner::class,     // If you use the package "tymon/jwt-auth" in your project, please uncomment this line
         // ...
     ],
     'destroy_controllers'      => [
@@ -72,8 +78,8 @@ return [
     'swoole'                   => [
         'daemonize'          => env('LARAVELS_DAEMONIZE', false),
         'dispatch_mode'      => 2,
-        'reactor_num'        => 1,//function_exists('swoole_cpu_num') ? swoole_cpu_num() * 2 : 4,
-        'worker_num'         => function_exists('swoole_cpu_num') ? swoole_cpu_num() * 2 : 8,
+        'reactor_num'        => function_exists('swoole_cpu_num') ? swoole_cpu_num() * 2 : 4,
+        'worker_num'         => 1, //function_exists('swoole_cpu_num') ? swoole_cpu_num() * 2 : 8,
         //'task_worker_num'    => function_exists('swoole_cpu_num') ? swoole_cpu_num() * 2 : 8,
         'task_ipc_mode'      => 1,
         'task_max_request'   => 8000,

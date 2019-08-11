@@ -11,6 +11,7 @@ use Hhxsv5\LaravelS\Swoole\WebSocketHandlerInterface;
 use JWTAuth;
 
 use App\User;
+use App\Websocket\SocketAuth;
 use App\Websocket\Controllers\StatusController;
 use App\Websocket\Controllers\ChatMessageController;
 
@@ -34,7 +35,7 @@ class SocketHandler implements WebSocketHandlerInterface
             JWTAuth::parseToken();
             // and you can continue to chain methods
             $user = JWTAuth::parseToken()->authenticate();
-            auth()->loginUsingId($user->id);
+            SocketAuth::storeUser($fd, $user);
 
             $token = str_random(31);
             $server->push($fd, json_encode([
@@ -57,14 +58,15 @@ class SocketHandler implements WebSocketHandlerInterface
      * @param \Swoole\Websocket\Frame $frame
      */
     public function onMessage(Server $server, Frame $frame) {
-        if ($requestData = Abc::validate($frame->data)) {
+
+        if ($requestData = JSONRequest::validate($frame->data)) {
             if ($requestData->getAction() == 'message') {
                 ChatMessageController::handle(
-                    $server, $requestData->getPayload()
+                    $server, $requestData->getPayload(), $frame->fd
                 );
             } elseif ($requestData->getAction() == 'find-dudes-message') {
                 \App\Websocket\Controllers\FindDudesController::notifyRoom(
-                    $server, $requestData->getPayload()
+                    $server, $requestData->getPayload(), $frame->fd
                 );
             } // else if
         } // end if
@@ -79,10 +81,11 @@ class SocketHandler implements WebSocketHandlerInterface
     public function onClose(Server $server, $fd, $reactorId) {
 
         if ($user_id = SocketPool::find($fd)) {
+            SocketAuth::popUser($fd);
             if (SocketPool::pop($user_id, $fd)) {
                 swoole_timer_after(config('app.user-left-timeout'), function ($user, $server) {
                     StatusController::userOffline($server, $user);
-                }, $user_id);
+                }, $user_id, $server);
             } // end if            
         } // end if
     }

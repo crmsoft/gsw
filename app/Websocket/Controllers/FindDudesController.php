@@ -7,6 +7,7 @@ use App\Entities\Conversation;
 use App\Websocket\SocketPool;
 use SwooleTW\Http\Websocket\Facades\Room;
 use SwooleTW\Http\Websocket\Facades\Websocket;
+use SwooleTW\Http\Websocket\Rooms\TableRoom;
 
 class FindDudesController implements Controller {
 
@@ -64,14 +65,25 @@ class FindDudesController implements Controller {
     /**
      * New staff on channel
      * 
-     * @param array
+     * @param Swoole\WebSocket\Server
+     * @param string channel
+     * @param int fd
+     * 
+     * @return void
      */
-    public static function notifyRoom($data)
+    public static function notifyRoom($server, $data, $emit_fd)
     {
-        Websocket::broadcast()->to($data['requestData'])->emit('message', json_encode([
-            'action' => 'channel-update',
-            'target' => $data['requestData']
-        ]));
+        foreach (Room::getClients($data) as $fd) {
+            
+            if ($fd == $emit_fd) {
+                continue;
+            } // end if
+            
+            $server->push($fd, json_encode([
+                'action' => 'channel-update',
+                'target' => $data
+            ]));
+        } // end foreach
     }
 
 }

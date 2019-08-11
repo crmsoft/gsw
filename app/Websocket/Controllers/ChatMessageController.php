@@ -5,6 +5,7 @@ namespace App\Websocket\Controllers;
 use App\Websocket\Controllers\Controller;
 use App\Entities\Conversation;
 use App\Websocket\SocketPool;
+use App\Websocket\SocketAuth;
 
 class ChatMessageController implements Controller {
     
@@ -15,14 +16,14 @@ class ChatMessageController implements Controller {
      * 
      * @return void
      */
-    final public static function handle($server, $data) {
-        $user = auth()->user();
-
+    final public static function handle($server, $data, $fd) {
+        $user_id = SocketAuth::getUser($fd);
+        
         $conversation = Conversation::where('hash_id', $data)->first();
         
-        if ($conversation && $conversation->isMember($user)) {
-            $conversation->members->map(function ($member) use ($conversation, $user, $server) {
-                if ($member->user_communication_id > 0 && ($user->id != $member->id)) {
+        if ($conversation && $conversation->isMember($user_id)) {
+            $conversation->members->map(function ($member) use ($conversation, $user_id, $server) {
+                if ($member->user_communication_id > 0 && ($user_id != $member->id)) {
                     SocketPool::to($server, $member, [
                         'target' => $conversation->hash_id,
                         'action' => 'message'

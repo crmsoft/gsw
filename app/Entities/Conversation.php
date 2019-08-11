@@ -135,7 +135,7 @@ class Conversation extends Model
 
     public function isMember($user)
     {
-        return $this->members()->where('users.id', $user->id)->count() > 0;
+        return $this->members()->where('users.id', $user)->count() > 0;
     }
 
     public function messages()

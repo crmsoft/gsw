@@ -8,6 +8,8 @@ use App\Websocket\Controllers\NotificationController;
 use App\Websocket\Controllers\FindDudesController;
 use Hhxsv5\LaravelS\Swoole\Events\WorkerStartInterface;
 use Swoole\Http\Server;
+use SwooleTW\Http\Websocket\Rooms\RoomContract;
+use SwooleTW\Http\Websocket\Rooms\TableRoom;
 
 class AppConnector implements WorkerStartInterface {
 
@@ -17,6 +19,20 @@ class AppConnector implements WorkerStartInterface {
 
     public function handle(Server $server, $worker_id)
     {
+        $app = app('app');
+        $app->singleton(RoomContract::class, function () {
+            $roomHandler = new TableRoom([
+                'room_rows' => 4096,
+                'room_size' => 2048,
+                'client_rows' => 8192,
+                'client_size' => 2048,
+            ]);
+
+            return $roomHandler->prepare();
+        });
+
+        $app->alias(RoomContract::class, 'swoole.room');
+
         go(function () use ($server) {
             $redis = new Redis();
             $redis->connect(config('database.redis.default.host'), config('database.redis.default.port'));
