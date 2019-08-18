@@ -20,6 +20,15 @@ class FindDudesController implements Controller {
      */
     public static function pushToRoom($details)
     {
+        $server = app('swoole');
+        // update on channel of participants
+        foreach(Room::getClients($details['target']) as $fd) {
+            $server->push($fd, json_encode([
+                'channel' => $details['target'],
+                'action' => 'new-participant'
+            ]));
+        } // end foreach
+
         $fds = SocketPool::connections($details['user']);
 
         foreach ($fds as $fd) {
@@ -28,6 +37,14 @@ class FindDudesController implements Controller {
                 // reset prev subscriptions
                 foreach (Room::getRooms($fd[0]) as $room) {
                     Room::delete($fd[0], $room);
+
+                    // update on channel of participants
+                    foreach(Room::getClients($room) as $room_member_fd) {
+                        $server->push($room_member_fd, json_encode([
+                            'channel' => $details['target'],
+                            'action' => 'pop-participant'
+                        ]));
+                    } // end foreach
                 } // end foreach
 
                 // subscribe
@@ -47,6 +64,15 @@ class FindDudesController implements Controller {
      */
     public static function popFromRoom($details)
     {
+        $server = app('swoole');
+        // update on channel of participants
+        foreach(Room::getClients($details['target']) as $fd) {
+            $server->push($fd, json_encode([
+                'channel' => $details['target'],
+                'action' => 'pop-participant'
+            ]));
+        } // end foreach
+
         $fds = SocketPool::connections($details['user']);
 
         foreach ($fds as $fd) {
@@ -79,10 +105,18 @@ class FindDudesController implements Controller {
                 continue;
             } // end if
             
-            $server->push($fd, json_encode([
-                'action' => 'channel-update',
-                'target' => $data
-            ]));
+            try {
+                $server->push($fd, json_encode([
+                    'action' => 'channel-update',
+                    'target' => $data
+                ]));
+            } catch (\Trowable $e) {
+                Room::delete($fd, [$data]);
+                echo "failed to send packet to $fd", PHP_EOL;
+                echo $e->getMessage();
+                echo PHP_EOL;
+            }
+            
         } // end foreach
     }
 

@@ -19,6 +19,7 @@ class AppConnector implements WorkerStartInterface {
 
     public function handle(Server $server, $worker_id)
     {
+        // laravel swoole room facades injection
         $app = app('app');
         $app->singleton(RoomContract::class, function () {
             $roomHandler = new TableRoom([

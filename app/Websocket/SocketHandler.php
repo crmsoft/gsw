@@ -59,6 +59,12 @@ class SocketHandler implements WebSocketHandlerInterface
      */
     public function onMessage(Server $server, Frame $frame) {
 
+        // check for to many connections
+        if (SocketPool::checkThrottle($frame->fd)) {
+            $server->close($frame->fd, false);
+            return;
+        }
+
         if ($requestData = JSONRequest::validate($frame->data)) {
             if ($requestData->getAction() == 'message') {
                 ChatMessageController::handle(

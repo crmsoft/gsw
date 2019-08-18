@@ -3,6 +3,7 @@
 
 namespace App\Websocket;
 
+use SwooleTW\Http\Websocket\Facades\Room;
 
 /**
  * Associate users with fd 
@@ -113,6 +114,12 @@ final class SocketPool {
      */
     final static public function pop($user_id, $fd): bool
     {
+        // pop user from rooms
+        $rooms = Room::getRooms($fd);
+        if (!empty($rooms)) {
+            Room::delete($fd, $rooms);
+        } // end if
+
         // get user current connections
         $connections = self::connections($user_id);
         // pick live connections
@@ -131,6 +138,30 @@ final class SocketPool {
         } else {
             self::table()->set($user_id, $data);
         } // end if
+
+        return false;
+    }
+
+    /**
+     * Stop any continues requests to the server
+     * Allows only one hit per second
+     * 
+     * @param int 
+     * 
+     * @return bool
+     */
+    public static function checkThrottle($fd)
+    {
+        $userHit = app('swoole')->userhitTable;
+        $data = $userHit->get($fd);
+
+        if ((time() - ($data['time'] ?? 0)) == 0) {
+            $userHit->del($fd);
+            return true;
+        } // end if
+
+        // update last hit
+        $userHit->set($fd, ['time' => time()]);
 
         return false;
     }
