@@ -14,7 +14,7 @@ class StatusController implements Controller {
      * @param User
      * @return void
      */
-    public static function userOffline($server, $user)
+    public static function userOffline($user)
     {
         if (count(SocketPool::connections($user)) == 0) {
             print_r("no connections found $user");
@@ -23,9 +23,9 @@ class StatusController implements Controller {
             $user->user_communication_id = null;
             $user->save();
             // notify online friends about user leave
-            $user->friend->map(function ($friend) use ($user, $server) {
+            $user->friend->map(function ($friend) use ($user) {
                 if ($friend->user_communication_id > 0) {
-                    SocketPool::to($server, $friend, [
+                    SocketPool::to($friend, [
                         'target' => $user->username,
                         'action' => 'offline',
                         'status' => $user->profile->m_status
@@ -41,16 +41,16 @@ class StatusController implements Controller {
      * @param User
      * @return void
      */
-    public static function userOnline($server, $user)
+    public static function userOnline($user)
     {
         if ($user->user_communication_id == null) {
             
             $user->user_communication_id = 1;
             $user->save();
 
-            $user->friend->map(function ($friend) use ($user, $server) {
+            $user->friend->map(function ($friend) use ($user) {
                 if ($friend->user_communication_id > 0) {
-                    SocketPool::to($server, $friend, [
+                    SocketPool::to($friend, [
                         'target' => $user->username,
                         'action' => 'online',
                         'status' => $user->profile->m_status
@@ -68,11 +68,11 @@ class StatusController implements Controller {
      * 
      * @return void
      */
-    public static function userStatusToggle($server, $user)
+    public static function userStatusToggle($user)
     {
-        $user->friend->map(function ($friend) use ($user, $server) {
+        $user->friend->map(function ($friend) use ($user) {
             if ($friend->user_communication_id > 0) {
-                SocketPool::to($server, $friend, [
+                SocketPool::to($friend, [
                     'target' => $user->username,
                     'action' => 'online',
                     'status' => $user->profile->m_status

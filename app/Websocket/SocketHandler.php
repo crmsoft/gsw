@@ -44,7 +44,7 @@ class SocketHandler implements WebSocketHandlerInterface
             ]));
 
             SocketPool::push($user, $fd, $token);
-            StatusController::userOnline($server, $user);
+            StatusController::userOnline($user);
         } catch (\Exception $e) {
             echo $e->getMessage()."\n";
             $server->close($fd, false);
@@ -68,11 +68,11 @@ class SocketHandler implements WebSocketHandlerInterface
         if ($requestData = JSONRequest::validate($frame->data)) {
             if ($requestData->getAction() == 'message') {
                 ChatMessageController::handle(
-                    $server, $requestData->getPayload(), $frame->fd
+                    $requestData->getPayload(), $frame->fd
                 );
             } elseif ($requestData->getAction() == 'find-dudes-message') {
                 \App\Websocket\Controllers\FindDudesController::notifyRoom(
-                    $server, $requestData->getPayload(), $frame->fd
+                    $requestData->getPayload(), $frame->fd
                 );
             } // else if
         } // end if
@@ -89,9 +89,9 @@ class SocketHandler implements WebSocketHandlerInterface
         if ($user_id = SocketPool::find($fd)) {
             SocketAuth::popUser($fd);
             if (SocketPool::pop($user_id, $fd)) {
-                swoole_timer_after(config('app.user-left-timeout'), function ($user, $server) {
-                    StatusController::userOffline($server, $user);
-                }, $user_id, $server);
+                swoole_timer_after(config('app.user-left-timeout'), function ($user) {
+                    StatusController::userOffline($user);
+                }, $user_id);
             } // end if            
         } // end if
     }

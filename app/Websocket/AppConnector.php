@@ -34,7 +34,7 @@ class AppConnector implements WorkerStartInterface {
 
         $app->alias(RoomContract::class, 'swoole.room');
 
-        go(function () use ($server) {
+        go(function () {
             $redis = new Redis();
             $redis->connect(config('database.redis.default.host'), config('database.redis.default.port'));
             
@@ -49,14 +49,16 @@ class AppConnector implements WorkerStartInterface {
                         print_r("\nTRIGGER REDIS\n");
                         $payload = json_decode($info, true);
                         if ($payload['action'] == 'message-read') {
-                            ChatMessageController::viewed($server, $payload);
+                            ChatMessageController::viewed($payload);
                         } elseif ($payload['action'] == 'notification') {
-                            NotificationController::notifyNotification($server, $payload['target']);
+                            NotificationController::notifyNotification($payload['target']);
                         } elseif ($payload['action'] == 'sub-find-dudes') {
                             FindDudesController::pushToRoom($payload);
                         } elseif ($payload['action'] == 'unsub-find-dudes') {
                             FindDudesController::popFromRoom($payload);
-                        } // end if
+                        }  elseif ($payload['action'] == 'user-subscribed') {
+                            NotificationController::notifyUserSubscription($payload);
+                        } // end if // end if
                     } 
                 }
             }

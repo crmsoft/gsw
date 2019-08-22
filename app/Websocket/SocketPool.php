@@ -45,6 +45,16 @@ final class SocketPool {
     }
 
     /**
+     * Get the server
+     * 
+     * @return SwooleWebsocket $server
+     */
+    public static function server()
+    {
+        return app('swoole');
+    }
+
+    /**
      * Get all available connections of the user
      * 
      * @param int
@@ -70,8 +80,11 @@ final class SocketPool {
      * @param Array 
      * @return void 
      */
-    final public static function to($server, $user, array $message): void
+    final public static function to($user, array $message): void
     {
+        // get server instance
+        $server = self::server();
+        // loop user connections
         foreach (self::connections($user->id) as $fd) {
             print_r("\n $user->id , {$fd[0]} \n");
             $server->push(

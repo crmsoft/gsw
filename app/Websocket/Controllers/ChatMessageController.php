@@ -16,15 +16,15 @@ class ChatMessageController implements Controller {
      * 
      * @return void
      */
-    final public static function handle($server, $data, $fd) {
+    final public static function handle($data, $fd) {
         $user_id = SocketAuth::getUser($fd);
         
         $conversation = Conversation::where('hash_id', $data)->first();
         
         if ($conversation && $conversation->isMember($user_id)) {
-            $conversation->members->map(function ($member) use ($conversation, $user_id, $server) {
+            $conversation->members->map(function ($member) use ($conversation, $user_id) {
                 if ($member->user_communication_id > 0 && ($user_id != $member->id)) {
-                    SocketPool::to($server, $member, [
+                    SocketPool::to($member, [
                         'target' => $conversation->hash_id,
                         'action' => 'message'
                     ]);
@@ -33,12 +33,12 @@ class ChatMessageController implements Controller {
         } // end if
     }
 
-    final public static function viewed($server, array $payload): void {
+    final public static function viewed(array $payload): void {
         $conversation = Conversation::where('hash_id', $payload['target'])->first();
 
         if ($conversation) {
-            $conversation->members()->whereIn('users.id', $payload['involved'])->get()->map(function ($user) use ($conversation, $server) {
-                SocketPool::to($server, $user, [
+            $conversation->members()->whereIn('users.id', $payload['involved'])->get()->map(function ($user) use ($conversation) {
+                SocketPool::to($user, [
                     'target' => $conversation->hash_id,
                     'action' => 'messages-viewed'
                 ]);
