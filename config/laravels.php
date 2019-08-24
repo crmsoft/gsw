@@ -60,6 +60,12 @@ return [
             'column' => [
                 ['name' => 'id', 'type' => swoole_table::TYPE_INT, 'size' => 32]
             ]
+        ],
+        'userhit' => [
+            'size' => 1024,
+            'column' => [
+                ['name' => 'time', 'type' => swoole_table::TYPE_INT, 'size' => 32]
+            ]
         ]
     ],
     'register_providers'       => [],
